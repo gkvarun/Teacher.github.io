@@ -217,20 +217,20 @@
   <!-- Main window -->
   <div class="window" id="mainWindow">
     <div class="title-bar">
-      <div class="title-bar-text">System Disk - Teacher Crash</div>
+      <div class="title-bar-text">System Disk - Teacher Administrator</div>
       <div class="title-bar-controls">
         <button aria-label="Close"></button>
       </div>
     </div>
     <div class="window-body">
-      <div style="font-size:1.13em;margin-bottom:8px;">Macintosh OS Teacher Crash Simulator</div>
-      <div style="margin-bottom:3px;">Welcome!<br />Click the button below if you are a teacher.</div>
+      <div style="font-size:1.13em;margin-bottom:8px;">To our respected Ma'am</div>
+      <div style="margin-bottom:3px;">Welcome!<br />We invite you to Celebrate with us</div>
       <div class="arrow-group">
         <span class="arrow">&#8595;</span>
         <span class="arrow">&#8595;</span>
       </div>
-      <button id="main-btn" class="big-btn" aria-label="Crash button">click me (if ur a teacher)</button>
-      <div style="color:#666;padding-top:7px;font-size:.99em;">Macintosh Edition</div>
+      <button id="main-btn" class="big-btn" aria-label="Crash button">click (if you're a teacher)</button>
+      <div style="color:#666;padding-top:7px;font-size:.99em;">Macintosh 1997</div>
     </div>
   </div>
 
@@ -244,6 +244,9 @@
   </div>
 
   <!-- BSOD -->
+  <div id="bsod-link" style="display:none">
+    <a href="teacher.html" id="return-link" style="color:#6cf;font-size:1.08em;text-decoration:underline;"></a>
+  </div> 
   <div id="bsod" class="bsod" role="alertdialog" aria-live="assertive">
     <pre>
 Sorry,
@@ -251,7 +254,7 @@ A problem has occurred in the system.
 "System Error" (#Type12)
 Please Restart Macintosh.
 
-Press ⌘+Ctrl+Power to restart
+Press the ENTER key 3 times
     </pre>
   </div>
 
@@ -353,7 +356,7 @@ Press ⌘+Ctrl+Power to restart
       }
     });
 
-    // Folder contents data
+    // Folder contents datas
     const folderContents = {
       'trash-icon': ['Empty', 'Later', 'Glowing emo files'],
       'system-folder-icon': ['System32', 'Drivers', 'config.sys'],
@@ -366,8 +369,10 @@ Press ⌘+Ctrl+Power to restart
     const fmClose = document.getElementById('fm-close');
     const mainWindow = document.getElementById('mainWindow');
 
+    fileManager.style.display = 'none';
+
     icons.forEach(icon => {
-      icon.addEventListener('dblclick', () => openFileManager(icon.id));
+      icon.addEventListener('click', () => openFileManager(icon.id));
     });
 
     function openFileManager(folderId) {
@@ -417,6 +422,7 @@ Press ⌘+Ctrl+Power to restart
       for (let i = 0; i < count; i++) {
         setTimeout(() => {
           const win = document.createElement('div');
+          fileManager.style.display = 'none';
           win.className = 'window';
           win.style.position = 'absolute';
           win.style.width = '260px';
@@ -460,8 +466,22 @@ Press ⌘+Ctrl+Power to restart
       setTimeout(() => {
         document.querySelectorAll('.window').forEach(e => e.remove());
         bsod.style.display = 'flex';
-      }, 1400); // 1400ms is enough for popups to appear
+      }, 2000); // 1400ms is enough for popups to appear
     };
+
+    // Listen for Enter on BSOD
+const bsodn = document.getElementById('bsod');
+const bsodLinkDiv = document.getElementById('bsod-link');
+
+document.addEventListener('keydown', function(e) {
+  // If BSOD is visible and Enter pressed
+  if (bsodn.style.display === 'flex' && (e.key === 'Enter' || e.keyCode === 13)) {
+    bsodLinkDiv.style.display = 'block';
+    // Optionally, move focus to the link
+    document.getElementById('return-link').focus();
+  }
+});
+
   </script>
 </body>
 </html>
