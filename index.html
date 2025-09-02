@@ -1,0 +1,467 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>Teacher Crash: Mac Edition - GSAP 12fps Animations</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <!-- Classic Mac system.css -->
+  <link rel="stylesheet" href="https://unpkg.com/@sakun/system.css" />
+  <!-- GSAP CDN -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.2/gsap.min.js"></script>
+  <style>
+    html, body {
+      margin: 0; height: 100%; background: #cacaca;
+      font-family: 'Chicago', 'Geneva', system-ui, sans-serif;
+      overflow: hidden;
+      cursor: none; /* hide system cursor for custom cursor */
+    }
+    .desktop-icon {
+      position: absolute;
+      width: 64px;
+      text-align: center;
+      user-select: none;
+      z-index: 2;
+      cursor: grab;
+      transition: transform 0.16s ease, filter 0.25s ease;
+      filter: drop-shadow(1px 1px 1px #999);
+    }
+    .desktop-icon:hover {
+      filter: drop-shadow(0 0 8px #24a2d7);
+      transform: scale(1.12);
+      cursor: grab;
+    }
+    /* Dragging styles */
+    .desktop-icon.dragging {
+      opacity: 0.7;
+      filter: drop-shadow(0 0 14px #007acc);
+      cursor: grabbing;
+      transition: none;
+      z-index: 9999 !important;
+    }
+    .desktop-label {
+      font-size: 0.9em;
+      color: #222;
+      margin-top: 3px;
+      font-family: 'Chicago', 'Geneva', system-ui, sans-serif;
+      user-select: none;
+    }
+    .window {
+      min-width: 420px;
+      position: absolute;
+      left: 50%; top: 50%;
+      transform: translate(-50%, -50%);
+      box-shadow: 0 12px 36px #aaa9 !important;
+      background: #ece9d8;
+      border: 2px solid #000;
+      border-radius: 4px;
+      z-index: 4;
+    }
+    .window-body {
+      padding: 20px 24px 24px 24px;
+      font-size: 1rem;
+      color: #000;
+      font-family: 'Chicago', 'Geneva', system-ui, sans-serif;
+    }
+    .big-btn {
+      margin: 18px 0;
+      font-size: 1.21em;
+      background: #efefef;
+      color: #111;
+      padding: 19px 60px;
+      border-radius: 6px;
+      border: 2px solid #555;
+      box-shadow: 1px 2px #fff inset, 0 2px 1px #999;
+      cursor: pointer;
+      font-family: 'Chicago', 'Geneva', system-ui, sans-serif;
+      font-weight: bold;
+      outline: none;
+      transition: background 0.18s;
+      text-shadow: 0 1px #fff, 0 2px #aaa;
+    }
+    .big-btn:focus {
+      outline: 3px solid #24a2d7;
+      outline-offset: 3px;
+    }
+    .arrow-group {
+      margin-top: 10px;
+      display: flex;
+      gap: 18px;
+      justify-content: center;
+      align-items: center;
+    }
+    .arrow {
+      font-size: 2.3em;
+      color: #555;
+      text-shadow: 0 2px 4px #fff;
+    }
+    /* Custom pixelated round cursor with glow */
+    #pixel-cursor {
+      position: fixed;
+      left: 0; top: 0;
+      width: 24px; height: 24px;
+      pointer-events: none;
+      border-radius: 50%;
+      background: black;
+      box-shadow: 0 0 22px 6px rgba(0,255,255,0.28);
+      filter: blur(0.7px);
+      outline: 2px solid rgba(0,255,255,0.23);
+      z-index: 9999;
+      transition: background .08s, box-shadow .18s;
+      opacity: .97;
+      image-rendering: pixelated;
+      transform-origin: center center;
+    }
+    .bsod {
+      display: none;
+      position: fixed;
+      inset: 0;
+      background: #222;
+      color: #fff;
+      font-family: Monaco, Courier, monospace;
+      font-size: 1.5em;
+      align-items: center;
+      justify-content: center;
+      text-align: left;
+      z-index: 100;
+      padding: 7vw;
+      letter-spacing: 1px;
+      line-height: 1.7;
+      flex-direction: column;
+    }
+    /* File Manager window, positioning set dynamically */
+    #file-manager {
+      display: none;
+      position: absolute;
+      width: 400px; max-width: 90vw; max-height: 70vh;
+      background: #ece9d8;
+      border: 3px solid black;
+      border-radius: 6px;
+      box-shadow: 0 12px 36px #aaa9;
+      z-index: 11000;
+      display: flex;
+      flex-direction: column;
+      font-family: 'Chicago', 'Geneva', system-ui, sans-serif;
+    }
+    #file-manager .title-bar {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      background: #000080;
+      color: white;
+      font-weight: bold;
+      padding: 6px 12px;
+      border-bottom: 2px solid #000;
+      border-radius: 3px 3px 0 0;
+      cursor: default;
+      user-select: none;
+    }
+    #file-manager .title-bar button {
+      background: #c0c0c0;
+      color: black;
+      border: 1px solid #000;
+      font-weight: normal;
+      height: 20px;
+      width: 36px;
+      cursor: pointer;
+      border-radius: 2px;
+    }
+    #file-manager .file-list {
+      flex-grow: 1;
+      overflow-y: auto;
+      padding: 8px 16px;
+      font-size: 1em;
+      background: #fff;
+      border-top: 2px solid #000;
+      border-radius: 0 0 4px 4px;
+    }
+    #file-manager .file-list div {
+      padding: 6px 4px;
+      border-bottom: 1px solid #ddd;
+      user-select: none;
+      cursor: default;
+    }
+    #file-manager .file-list div:last-child {
+      border-bottom: none;
+    }
+  </style>
+</head>
+<body>
+  <!-- Desktop Icons -->
+  <div class="desktop-icon" id="trash-icon" style="top:40px;left:34px;">
+    <svg width="38" height="38" viewBox="0 0 38 38" aria-label="Trash folder" role="img" tabindex="0">
+      <rect x="10" y="15" width="18" height="16" fill="#ddd" stroke="#333" stroke-width="1.5" />
+      <rect x="13" y="13" width="12" height="3" fill="#666" stroke="#333" stroke-width="1" />
+      <rect x="16" y="17" width="2" height="11" fill="#888" />
+      <rect x="20" y="17" width="2" height="11" fill="#888" />
+      <rect x="24" y="17" width="2" height="11" fill="#888" />
+    </svg>
+    <div class="desktop-label">Trash</div>
+  </div>
+  <div class="desktop-icon" id="system-folder-icon" style="top:42px;right:40px;">
+    <svg width="38" height="38" viewBox="0 0 38 38" aria-label="System folder" role="img" tabindex="0">
+      <rect x="7" y="13" width="24" height="15" fill="#bcd3e9" stroke="#333" stroke-width="2" />
+      <rect x="7" y="10" width="10" height="6" fill="#e8f0f6" stroke="#333" stroke-width="1" />
+      <rect x="15" y="15" width="9" height="2" fill="#809fc0" />
+    </svg>
+    <div class="desktop-label">System</div>
+  </div>
+  <div class="desktop-icon" id="my-folder-icon" style="bottom:56px;left:48px;">
+    <svg width="38" height="38" viewBox="0 0 38 38" aria-label="My folder" role="img" tabindex="0">
+      <rect x="7" y="13" width="24" height="15" fill="#e3deab" stroke="#333" stroke-width="2" />
+      <rect x="7" y="10" width="10" height="6" fill="#fcf3c2" stroke="#333" stroke-width="1" />
+      <rect x="15" y="15" width="9" height="2" fill="#b59f60" />
+    </svg>
+    <div class="desktop-label">My Folder</div>
+  </div>
+
+  <!-- Main window -->
+  <div class="window" id="mainWindow">
+    <div class="title-bar">
+      <div class="title-bar-text">System Disk - Teacher Crash</div>
+      <div class="title-bar-controls">
+        <button aria-label="Close"></button>
+      </div>
+    </div>
+    <div class="window-body">
+      <div style="font-size:1.13em;margin-bottom:8px;">Macintosh OS Teacher Crash Simulator</div>
+      <div style="margin-bottom:3px;">Welcome!<br />Click the button below if you are a teacher.</div>
+      <div class="arrow-group">
+        <span class="arrow">&#8595;</span>
+        <span class="arrow">&#8595;</span>
+      </div>
+      <button id="main-btn" class="big-btn" aria-label="Crash button">click me (if ur a teacher)</button>
+      <div style="color:#666;padding-top:7px;font-size:.99em;">Macintosh Edition</div>
+    </div>
+  </div>
+
+  <!-- File manager popup window -->
+  <div id="file-manager" role="dialog" aria-modal="true" aria-labelledby="fm-title" tabindex="-1">
+    <div class="title-bar">
+      <div id="fm-title">Folder Contents</div>
+      <button id="fm-close" aria-label="Close file manager">X</button>
+    </div>
+    <div class="file-list" id="file-list"></div>
+  </div>
+
+  <!-- BSOD -->
+  <div id="bsod" class="bsod" role="alertdialog" aria-live="assertive">
+    <pre>
+Sorry,
+A problem has occurred in the system.
+"System Error" (#Type12)
+Please Restart Macintosh.
+
+Press ⌘+Ctrl+Power to restart
+    </pre>
+  </div>
+
+  <!-- Custom pixelated cursor -->
+  <div id="pixel-cursor"></div>
+
+  <script>
+    // Set GSAP ticker to 12fps globally
+    gsap.ticker.fps(12);
+
+    // Custom pixelated cursor movement
+    const cursor = document.getElementById('pixel-cursor');
+    document.addEventListener('mousemove', e => {
+      cursor.style.left = (e.clientX - 12) + 'px';
+      cursor.style.top = (e.clientY - 12) + 'px';
+    });
+
+    // Animate Main Window pop-in at 12fps (~0.7s)
+    gsap.fromTo("#mainWindow",
+      { scale: 0.6, opacity: 0, yPercent: -50, xPercent: -50 },
+      {
+        scale: 1,
+        opacity: 1,
+        duration: 0.7,
+        ease: "power1.out",
+        yPercent: -50,
+        xPercent: -50
+      }
+    );
+
+    // Animate arrow bounce at 12fps continuously
+    gsap.to(".arrow", {
+      repeat: -1,
+      yoyo: true,
+      duration: 0.83,
+      ease: "sine.inOut",
+      y: -11,
+      color: "#bbb",
+      onRepeat: () => {
+        gsap.to(".arrow", { color: "#555", y: 0, duration: 0.4, ease: "sine.inOut" });
+      }
+    });
+
+    // Animate button subtle scale pulse at 12fps continuously
+    gsap.to("#main-btn", {
+      repeat: -1,
+      yoyo: true,
+      duration: 0.83,
+      ease: "sine.inOut",
+      scale: 1.06,
+      boxShadow: "0 8px 14px #222",
+      onRepeat: () => {
+        gsap.to("#main-btn", { scale: 1, boxShadow: "0 2px 1px #777", duration: 0.4, ease: "sine.inOut" });
+      }
+    });
+
+    // Drag and drop desktop icons logic
+    const icons = document.querySelectorAll('.desktop-icon');
+    let dragTarget = null;
+    let offsetX = 0;
+    let offsetY = 0;
+
+    icons.forEach(icon => {
+      icon.addEventListener('mousedown', e => {
+        e.preventDefault();
+        dragTarget = icon;
+        dragTarget.classList.add('dragging');
+        offsetX = e.clientX - dragTarget.getBoundingClientRect().left;
+        offsetY = e.clientY - dragTarget.getBoundingClientRect().top;
+      });
+      // Accessibility keyboard focus for drag hint
+      icon.addEventListener('keydown', e => {
+        if(e.key === 'Enter' || e.key === ' ') {
+          e.preventDefault();
+          icon.dispatchEvent(new Event('dblclick'));
+        }
+      });
+    });
+
+    document.addEventListener('mouseup', () => {
+      if (dragTarget) {
+        dragTarget.classList.remove('dragging');
+        dragTarget = null;
+      }
+    });
+
+    document.addEventListener('mousemove', e => {
+      if (dragTarget) {
+        let x = e.clientX - offsetX;
+        let y = e.clientY - offsetY;
+        const maxX = window.innerWidth - dragTarget.offsetWidth;
+        const maxY = window.innerHeight - dragTarget.offsetHeight;
+        if (x < 0) x = 0;
+        else if (x > maxX) x = maxX;
+        if (y < 0) y = 0;
+        else if (y > maxY) y = maxY;
+        dragTarget.style.left = x + 'px';
+        dragTarget.style.top = y + 'px';
+      }
+    });
+
+    // Folder contents data
+    const folderContents = {
+      'trash-icon': ['Empty', 'Later', 'Glowing emo files'],
+      'system-folder-icon': ['System32', 'Drivers', 'config.sys'],
+      'my-folder-icon': ['Documents', 'Photos', 'Projects', 'Resume.doc']
+    };
+
+    // File Manager popup logic
+    const fileManager = document.getElementById('file-manager');
+    const fileList = document.getElementById('file-list');
+    const fmClose = document.getElementById('fm-close');
+    const mainWindow = document.getElementById('mainWindow');
+
+    icons.forEach(icon => {
+      icon.addEventListener('dblclick', () => openFileManager(icon.id));
+    });
+
+    function openFileManager(folderId) {
+      fileList.innerHTML = '';
+      let files = folderContents[folderId] || ['Empty Folder'];
+      files.forEach(file => {
+        let div = document.createElement('div');
+        div.textContent = file;
+        fileList.appendChild(div);
+      });
+      
+      // Position popup near top-left of main window with slight overlap
+      const mainRect = mainWindow.getBoundingClientRect();
+      const popupWidth = 400;
+      const popupHeight = 320; // Approximate height
+
+      let leftPos = mainRect.left - popupWidth * 0.15;
+      let topPos = mainRect.top - popupHeight * 0.1;
+
+      leftPos = Math.max(5, leftPos);
+      topPos = Math.max(5, topPos);
+
+      fileManager.style.left = leftPos + 'px';
+      fileManager.style.top = topPos + 'px';
+
+      fileManager.style.display = 'flex';
+      fileManager.focus();
+
+      // Animate popup using GSAP at 12fps
+      gsap.fromTo(fileManager, 
+        { scale: 0.6, opacity: 0 },
+        { scale: 1, opacity: 1, duration: 0.7, ease: "power1.out" }
+      );
+    }
+
+    fmClose.addEventListener('click', () => {
+      gsap.to(fileManager, { scale: 0.6, opacity: 0, duration: 0.4, ease: "power1.in", onComplete: () => {
+        fileManager.style.display = 'none';
+      }});
+    });
+
+    // Crash animation creating error windows with GSAP at 12fps intervals
+    const btn = document.getElementById('main-btn');
+    const bsod = document.getElementById('bsod');
+
+    function createErrorWindows(count) {
+      for (let i = 0; i < count; i++) {
+        setTimeout(() => {
+          const win = document.createElement('div');
+          win.className = 'window';
+          win.style.position = 'absolute';
+          win.style.width = '260px';
+          win.style.left = `${Math.random() * (window.innerWidth - 280)}px`;
+          win.style.top = `${Math.random() * (window.innerHeight - 105)}px`;
+          win.style.zIndex = 10 + Math.floor(Math.random() * 60);
+          document.body.appendChild(win);
+
+          gsap.fromTo(win, 
+            { scale: 0.7, opacity: 0},
+            { scale: 1, opacity: 1, duration: 0.29, ease: "power1.out" }
+          );
+
+          win.innerHTML = `
+            <div class="title-bar">
+              <div class="title-bar-text">Error</div>
+              <div class="title-bar-controls">
+                <button aria-label="Close" onclick="this.closest('.window').remove()"></button>
+              </div>
+            </div>
+            <div class="window-body" style="padding-top:9px;">
+              <svg style="width:22px;vertical-align:middle;margin-right:8px;" viewBox="0 0 22 22" aria-hidden="true">
+                <circle cx="11" cy="11" r="10" fill="#fff" stroke="#333" stroke-width="2"/>
+                <text x="7" y="16" fill="#333" font-size="15" font-family="monospace">!</text>
+              </svg>
+              System Error: ${Math.floor(Math.random() * 100000)}<br>
+              Application "Finder" has unexpectedly quit.<br>
+              <button class="btn" onclick="this.closest('.window').remove()">OK</button>
+            </div>
+          `;
+        }, i * 83);  // 83ms = 12fps interval
+      }
+    }
+
+    btn.onclick = async () => {
+      if (document.documentElement.requestFullscreen) {
+        await document.documentElement.requestFullscreen();
+      }
+      mainWindow.style.display = 'none';
+      createErrorWindows(16);
+      setTimeout(() => {
+        document.querySelectorAll('.window').forEach(e => e.remove());
+        bsod.style.display = 'flex';
+      }, 1400); // 1400ms is enough for popups to appear
+    };
+  </script>
+</body>
+</html>
